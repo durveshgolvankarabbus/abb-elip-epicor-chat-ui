@@ -1,70 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Enterprise Analytics Copilot</title>
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Enterprise Analytics Copilot</title>
+  <meta name="description" content="Power BI–style insights on EPICOR & Market data." />
+
+  <!-- Favicon (prevents 404 noise if you don't have an icon file yet) -->
+  <link rel="icon" href="data:," />
+
+  <!-- CSS -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-  <header class="topbar">
+  <header class="topbar" role="banner">
     <div class="topbar-inner">
-      <div class="brand">
+      <div class="brand" aria-label="Application title">
         <div class="brand-title">Enterprise Analytics Copilot</div>
-        <div class="brand-subtitle">Power BI–style insights on EPICOR & Market data</div>
+        <div class="brand-subtitle">Power BI–style insights on EPICOR &amp; Market data</div>
       </div>
-      <div class="env-pill" id="envPill">Live</div>
+
+      <div class="env-pill" id="envPill" aria-label="Environment status">Live</div>
     </div>
   </header>
 
-  <main class="container">
-    <section class="ask">
+  <main class="container" role="main">
+    <section class="ask" aria-label="Ask a question">
       <label for="questionInput" class="sr-only">Ask a question</label>
+
       <input
         id="questionInput"
+        name="question"
+        type="text"
         placeholder="e.g. Market share for last 8 quarters for Metallic Boxes"
         autocomplete="off"
+        spellcheck="false"
+        inputmode="text"
+        aria-describedby="examplesHint"
       />
-      <button id="askBtn">Ask</button>
+
+      <button id="askBtn" type="button" aria-label="Submit question">Ask</button>
     </section>
 
-    <div id="status" class="status hidden"></div>
+    <!-- Live status messages (loading/errors/success) -->
+    <div
+      id="status"
+      class="status hidden"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
 
-    <section id="answer" class="panel hidden">
+    <!-- Summary -->
+    <section id="answer" class="panel hidden" aria-label="Answer summary">
       <div class="panel-header">
         <h2>Summary</h2>
       </div>
       <p id="summary" class="summary"></p>
     </section>
 
-    <section id="data" class="panel hidden">
+    <!-- Results -->
+    <section id="data" class="panel hidden" aria-label="Result details">
       <div class="panel-header">
         <h2>Details</h2>
         <div class="panel-actions">
-          <button id="copyBtn" class="ghost-btn hidden">Copy table</button>
+          <button id="copyBtn" class="ghost-btn hidden" type="button" aria-label="Copy table to clipboard">
+            Copy table
+          </button>
         </div>
       </div>
-      <div id="tableContainer" class="table-wrap"></div>
+
+      <div id="tableContainer" class="table-wrap" aria-label="Results table"></div>
     </section>
 
-    <section class="panel hint">
-      <h2>Examples</h2>
+    <!-- Examples -->
+    <section class="panel hint" aria-label="Examples">
+      <h2 id="examplesHint">Examples</h2>
       <ul>
         <li>Market share for last 8 quarters for Metallic Boxes</li>
+        <li>Market share for last 8 quarters for top 5 manufacturers in Cable Ties</li>
         <li>Out of top 3 manufacturers in Cable Ties who gained and lost share in Q3 2025 compared to Q3 2024</li>
         <li>Growth Q3 2025 vs Q3 2024 for Conduit Fittings</li>
         <li>Seasonality for Cable Ties</li>
-        <li>New skus launched in last 4 quarters for Non-Metallic Boxes</li>
+        <li>New SKUs launched in last 4 quarters for Non-Metallic Boxes</li>
         <li>Market share for Type1 Q3 2025 for Cable Ties</li>
       </ul>
     </section>
   </main>
 
-  <footer class="footer">
+  <footer class="footer" role="contentinfo">
     © ABB Enterprise Analytics
   </footer>
 
-  <script src="app.js"></script>
+  <!-- App JS (single entry point) -->
+  <script src="app.js" defer></script>
 </body>
 </html>
