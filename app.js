@@ -1,68 +1,75 @@
-// ===============================
-// Enterprise Analytics Copilot UI
-// app.js
-// ===============================
+// ======================================
+// Enterprise Analytics Copilot - app.js
+// ======================================
 
-// Auto-detect backend URL (local vs Azure)
-const API_BASE =
-  window.location.hostname.includes("azurestaticapps.net")
-    ? "https://abb-elip-epicor-chatbot-g2hvgdadgtdycsdm.eastus-01.azurewebsites.net"
-    : "http://localhost:7071";
+// Detect environment (Azure vs local)
+const API_BASE = window.location.hostname.includes("azurestaticapps.net")
+  ? "https://abb-elip-epicor-chatbot-g2hvgdadgtdycsdm.eastus-01.azurewebsites.net"
+  : "http://localhost:7071";
 
-// DOM elements
-const questionInput = document.getElementById("question");
-const answerDiv = document.getElementById("answer");
-const dataDiv = document.getElementById("data");
-const askButton = document.getElementById("ask-btn");
+// DOM Elements (MATCHING YOUR HTML)
+const questionInput = document.getElementById("questionInput");
+const askBtn = document.getElementById("askBtn");
 
-// Attach click handler
-askButton.addEventListener("click", askQuestion);
+const statusSection = document.getElementById("status");
+const answerSection = document.getElementById("answer");
+const summaryEl = document.getElementById("summary");
 
-// Allow Enter key
+const dataSection = document.getElementById("data");
+const tableContainer = document.getElementById("tableContainer");
+
+// ==========================
+// Event Listeners
+// ==========================
+askBtn.addEventListener("click", askQuestion);
+
 questionInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") askQuestion();
 });
 
+// ==========================
+// Main Flow
+// ==========================
 async function askQuestion() {
   const question = questionInput.value.trim();
+
   if (!question) {
-    showError("Please enter a question.");
+    showStatus("Please enter a question.", true);
     return;
   }
 
-  // Reset UI
-  answerDiv.innerHTML = "⏳ Thinking…";
-  dataDiv.innerHTML = "";
+  resetUI();
+  showStatus("⏳ Processing your question…");
 
   try {
-    const response = await fetch(`${API_BASE}/api/ask`, {
+    // Step 1: Intent routing
+    const intentResponse = await fetch(`${API_BASE}/api/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question })
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    if (!intentResponse.ok) {
+      throw new Error("Failed to reach intent router.");
     }
 
-    const result = await response.json();
+    const intentResult = await intentResponse.json();
 
-    // If intent router response
-    if (result.endpoint) {
-      await callIntentEndpoint(result.endpoint, question);
+    if (!intentResult.endpoint) {
+      showStatus("Unsupported question type.", true);
       return;
     }
 
-    // Fallback (health/help response)
-    renderRaw(result);
+    // Step 2: Call resolved endpoint
+    await callEndpoint(intentResult.endpoint, question);
 
   } catch (err) {
-    showError("Failed to connect to backend.");
     console.error(err);
+    showStatus("❌ Unable to connect to backend.", true);
   }
 }
 
-async function callIntentEndpoint(endpoint, question) {
+async function callEndpoint(endpoint, question) {
   try {
     const response = await fetch(`${API_BASE}${endpoint}`, {
       method: "POST",
@@ -71,58 +78,48 @@ async function callIntentEndpoint(endpoint, question) {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      throw new Error("Query execution failed.");
     }
 
     const data = await response.json();
     renderResponse(data);
 
   } catch (err) {
-    showError("Query failed while processing data.");
     console.error(err);
+    showStatus("❌ Error while processing query.", true);
   }
 }
 
-// ===============================
-// Rendering Helpers
-// ===============================
-
+// ==========================
+// Rendering
+// ==========================
 function renderResponse(data) {
-  // Clear loading
-  answerDiv.innerHTML = "";
-  dataDiv.innerHTML = "";
+  hideStatus();
 
-  // Human summary (if present)
-  if (data.summary) {
-    answerDiv.innerHTML = `<strong>${data.summary}</strong>`;
-  } else {
-    answerDiv.innerHTML = "✅ Query executed successfully.";
-  }
+  answerSection.classList.remove("hidden");
+  summaryEl.textContent = data.summary || "Query executed successfully.";
 
-  // Tabular or JSON output
-  if (Array.isArray(data.rows)) {
+  if (Array.isArray(data.rows) && data.rows.length > 0) {
     renderTable(data.rows);
   } else {
-    renderRaw(data);
+    tableContainer.innerHTML = "<em>No data returned.</em>";
+    dataSection.classList.remove("hidden");
   }
 }
 
 function renderTable(rows) {
-  if (!rows.length) {
-    dataDiv.innerHTML = "No data returned.";
-    return;
-  }
+  dataSection.classList.remove("hidden");
+  tableContainer.innerHTML = "";
 
   const table = document.createElement("table");
-  table.border = "1";
-  table.cellPadding = "6";
+  table.className = "result-table";
 
   // Header
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
   Object.keys(rows[0]).forEach(col => {
     const th = document.createElement("th");
-    th.innerText = col;
+    th.textContent = col;
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
@@ -134,21 +131,33 @@ function renderTable(rows) {
     const tr = document.createElement("tr");
     Object.values(row).forEach(val => {
       const td = document.createElement("td");
-      td.innerText = val;
+      td.textContent = val;
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
 
-  dataDiv.appendChild(table);
+  tableContainer.appendChild(table);
 }
 
-function renderRaw(obj) {
-  dataDiv.innerHTML = `<pre>${JSON.stringify(obj, null, 2)}</pre>`;
+// ==========================
+// UI Helpers
+// ==========================
+function showStatus(message, isError = false) {
+  statusSection.textContent = message;
+  statusSection.classList.remove("hidden");
+  statusSection.style.color = isError ? "red" : "black";
 }
 
-function showError(msg) {
-  answerDiv.innerHTML = `❌ ${msg}`;
-  dataDiv.innerHTML = "";
+function hideStatus() {
+  statusSection.classList.add("hidden");
+}
+
+function resetUI() {
+  hideStatus();
+  answerSection.classList.add("hidden");
+  dataSection.classList.add("hidden");
+  summaryEl.textContent = "";
+  tableContainer.innerHTML = "";
 }
