@@ -14,8 +14,9 @@
   </header>
 
   <main>
-    <!-- Ask bar -->
+    <!-- Ask Bar -->
     <section class="ask">
+      <label for="questionInput" class="sr-only">Ask a question</label>
       <input
         id="questionInput"
         placeholder="e.g. Show new SKUs in 2025"
@@ -33,7 +34,7 @@
       <p id="summary"></p>
     </section>
 
-    <!-- Table -->
+    <!-- Data Table -->
     <section id="data" class="panel hidden">
       <h2>Details</h2>
       <div id="tableContainer"></div>
@@ -44,7 +45,7 @@
     © ABB Enterprise Analytics
   </footer>
 
-  <!-- ✅ SINGLE ENTRY POINT -->
+  <!-- Single JS entry -->
   <script src="app.js"></script>
 </body>
 </html>
