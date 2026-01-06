@@ -1,100 +1,154 @@
-// 🔗 Production API base (YOUR LIVE FUNCTION APP)
+// ===============================
+// Enterprise Analytics Copilot UI
+// app.js
+// ===============================
+
+// Auto-detect backend URL (local vs Azure)
 const API_BASE =
-  "https://abb-elip-epicor-chatbot-g2hvgdadgtdycsdm.eastus-01.azurewebsites.net/api";
+  window.location.hostname.includes("azurestaticapps.net")
+    ? "https://abb-elip-epicor-chatbot-g2hvgdadgtdycsdm.eastus-01.azurewebsites.net"
+    : "http://localhost:7071";
 
-const askBtn = document.getElementById("askBtn");
-const questionInput = document.getElementById("questionInput");
-const statusEl = document.getElementById("status");
-const answerEl = document.getElementById("answer");
-const summaryEl = document.getElementById("summary");
-const dataEl = document.getElementById("data");
-const tableContainer = document.getElementById("tableContainer");
+// DOM elements
+const questionInput = document.getElementById("question");
+const answerDiv = document.getElementById("answer");
+const dataDiv = document.getElementById("data");
+const askButton = document.getElementById("ask-btn");
 
-askBtn.addEventListener("click", askQuestion);
+// Attach click handler
+askButton.addEventListener("click", askQuestion);
+
+// Allow Enter key
 questionInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") askQuestion();
 });
 
-function setStatus(msg, type = "") {
-  statusEl.textContent = msg;
-  statusEl.className = "status " + (type || "");
-  statusEl.classList.remove("hidden");
-}
-
-function clearUI() {
-  statusEl.classList.add("hidden");
-  answerEl.classList.add("hidden");
-  dataEl.classList.add("hidden");
-  summaryEl.textContent = "";
-  tableContainer.innerHTML = "";
-}
-
 async function askQuestion() {
   const question = questionInput.value.trim();
-  if (!question) return;
+  if (!question) {
+    showError("Please enter a question.");
+    return;
+  }
 
-  clearUI();
-  setStatus("Thinking...");
+  // Reset UI
+  answerDiv.innerHTML = "⏳ Thinking…";
+  dataDiv.innerHTML = "";
 
   try {
-    // 1) Ask router
-    const askResp = await fetch(`${API_BASE}/ask`, {
+    const response = await fetch(`${API_BASE}/api/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question })
     });
-    const askJson = await askResp.json();
 
-    if (!askResp.ok || askJson.intent === "UNKNOWN") {
-      throw new Error(askJson.message || "Could not understand the question.");
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
 
-    // 2) Call resolved endpoint
-    const dataResp = await fetch(`${API_BASE}${askJson.endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question })
-    });
-    const dataJson = await dataResp.json();
+    const result = await response.json();
 
-    if (!dataResp.ok || dataJson.error) {
-      throw new Error(dataJson.error || "Data request failed.");
+    // If intent router response
+    if (result.endpoint) {
+      await callIntentEndpoint(result.endpoint, question);
+      return;
     }
 
-    // 3) Render
-    setStatus("Success", "success");
-    renderSummary(askJson.intent, dataJson);
-    renderTable(dataJson.rows || []);
+    // Fallback (health/help response)
+    renderRaw(result);
 
   } catch (err) {
-    setStatus(err.message, "error");
+    showError("Failed to connect to backend.");
+    console.error(err);
   }
 }
 
-function renderSummary(intent, data) {
-  let text = `Intent detected: ${intent}.`;
-  if (data.year && data.quarter) {
-    text += ` Period: ${data.quarter} ${data.year}.`;
+async function callIntentEndpoint(endpoint, question) {
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    renderResponse(data);
+
+  } catch (err) {
+    showError("Query failed while processing data.");
+    console.error(err);
   }
-  answerEl.classList.remove("hidden");
-  summaryEl.textContent = text;
+}
+
+// ===============================
+// Rendering Helpers
+// ===============================
+
+function renderResponse(data) {
+  // Clear loading
+  answerDiv.innerHTML = "";
+  dataDiv.innerHTML = "";
+
+  // Human summary (if present)
+  if (data.summary) {
+    answerDiv.innerHTML = `<strong>${data.summary}</strong>`;
+  } else {
+    answerDiv.innerHTML = "✅ Query executed successfully.";
+  }
+
+  // Tabular or JSON output
+  if (Array.isArray(data.rows)) {
+    renderTable(data.rows);
+  } else {
+    renderRaw(data);
+  }
 }
 
 function renderTable(rows) {
-  if (!rows || rows.length === 0) return;
+  if (!rows.length) {
+    dataDiv.innerHTML = "No data returned.";
+    return;
+  }
 
-  const cols = Object.keys(rows[0]);
-  let html = "<table><thead><tr>";
-  cols.forEach(c => html += `<th>${c}</th>`);
-  html += "</tr></thead><tbody>";
+  const table = document.createElement("table");
+  table.border = "1";
+  table.cellPadding = "6";
 
-  rows.forEach(r => {
-    html += "<tr>";
-    cols.forEach(c => html += `<td>${r[c]}</td>`);
-    html += "</tr>";
+  // Header
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+  Object.keys(rows[0]).forEach(col => {
+    const th = document.createElement("th");
+    th.innerText = col;
+    headerRow.appendChild(th);
   });
-  html += "</tbody></table>";
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
 
-  tableContainer.innerHTML = html;
-  dataEl.classList.remove("hidden");
+  // Body
+  const tbody = document.createElement("tbody");
+  rows.forEach(row => {
+    const tr = document.createElement("tr");
+    Object.values(row).forEach(val => {
+      const td = document.createElement("td");
+      td.innerText = val;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  dataDiv.appendChild(table);
+}
+
+function renderRaw(obj) {
+  dataDiv.innerHTML = `<pre>${JSON.stringify(obj, null, 2)}</pre>`;
+}
+
+function showError(msg) {
+  answerDiv.innerHTML = `❌ ${msg}`;
+  dataDiv.innerHTML = "";
 }
