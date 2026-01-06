@@ -38,7 +38,7 @@
     const answer = document.getElementById("answer");
     const summary = document.getElementById("summary");
 
-    askBtn.onclick = async () => {
+    askBtn.addEventListener("click", async () => {
       const question = input.value.trim();
       if (!question) return;
 
@@ -47,29 +47,32 @@
       answer.classList.add("hidden");
 
       try {
-        const res = await fetch(
+        const response = await fetch(
           "https://abb-elip-epicor-chatbot-g2hvgdadgtdycsdm.eastus-01.azurewebsites.net/api/ask",
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json"
+            },
             body: JSON.stringify({ question })
           }
         );
 
-        if (!res.ok) {
-          throw new Error("API call failed");
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
 
-        const data = await res.json();
+        const data = await response.json();
 
         summary.innerText = data.summary || "No answer returned.";
         answer.classList.remove("hidden");
         status.classList.add("hidden");
 
-      } catch (err) {
+      } catch (error) {
+        console.error(error);
         status.innerText = "❌ Error connecting to analytics engine.";
       }
-    };
+    });
   </script>
 </body>
 </html>
