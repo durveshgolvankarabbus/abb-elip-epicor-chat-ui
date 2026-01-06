@@ -18,7 +18,7 @@
       <input
         id="questionInput"
         type="text"
-        placeholder="e.g., Show total revenue"
+        placeholder="e.g., show total revenue for 2025"
       />
       <button id="askBtn">Ask</button>
     </section>
@@ -48,7 +48,7 @@
 
       try {
         const res = await fetch(
-          "https://abb-elip-epicor-chatbot.azurewebsites.net/api/ask",
+          "https://abb-elip-epicor-chatbot-g2hvgdadgtdycsdm.eastus-01.azurewebsites.net/api/ask",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
