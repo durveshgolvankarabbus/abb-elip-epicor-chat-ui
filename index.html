@@ -8,44 +8,63 @@
 </head>
 
 <body>
-  <header>
-    <h1>Enterprise Analytics Copilot</h1>
-    <p>Power BI–style insights on EPICOR data</p>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-title">Enterprise Analytics Copilot</div>
+        <div class="brand-subtitle">Power BI–style insights on EPICOR & Market data</div>
+      </div>
+      <div class="env-pill" id="envPill">Live</div>
+    </div>
   </header>
 
-  <main>
-    <!-- Ask Bar -->
+  <main class="container">
     <section class="ask">
       <label for="questionInput" class="sr-only">Ask a question</label>
       <input
         id="questionInput"
-        placeholder="e.g. Show new SKUs in 2025"
+        placeholder="e.g. Market share for last 8 quarters for Metallic Boxes"
         autocomplete="off"
       />
       <button id="askBtn">Ask</button>
     </section>
 
-    <!-- Status -->
     <div id="status" class="status hidden"></div>
 
-    <!-- Summary -->
     <section id="answer" class="panel hidden">
-      <h2>Summary</h2>
-      <p id="summary"></p>
+      <div class="panel-header">
+        <h2>Summary</h2>
+      </div>
+      <p id="summary" class="summary"></p>
     </section>
 
-    <!-- Data Table -->
     <section id="data" class="panel hidden">
-      <h2>Details</h2>
-      <div id="tableContainer"></div>
+      <div class="panel-header">
+        <h2>Details</h2>
+        <div class="panel-actions">
+          <button id="copyBtn" class="ghost-btn hidden">Copy table</button>
+        </div>
+      </div>
+      <div id="tableContainer" class="table-wrap"></div>
+    </section>
+
+    <section class="panel hint">
+      <h2>Examples</h2>
+      <ul>
+        <li>Market share for last 8 quarters for Metallic Boxes</li>
+        <li>Out of top 3 manufacturers in Cable Ties who gained and lost share in Q3 2025 compared to Q3 2024</li>
+        <li>Growth Q3 2025 vs Q3 2024 for Conduit Fittings</li>
+        <li>Seasonality for Cable Ties</li>
+        <li>New skus launched in last 4 quarters for Non-Metallic Boxes</li>
+        <li>Market share for Type1 Q3 2025 for Cable Ties</li>
+      </ul>
     </section>
   </main>
 
-  <footer>
+  <footer class="footer">
     © ABB Enterprise Analytics
   </footer>
 
-  <!-- Single JS entry -->
   <script src="app.js"></script>
 </body>
 </html>
