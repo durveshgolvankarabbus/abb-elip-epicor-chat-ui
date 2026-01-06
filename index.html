@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Enterprise Analytics Copilot</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
@@ -18,7 +18,7 @@
       <input
         id="questionInput"
         type="text"
-        placeholder="e.g., Revenue YoY in Q2 2025"
+        placeholder="e.g., Show total revenue"
       />
       <button id="askBtn">Ask</button>
     </section>
@@ -47,11 +47,18 @@
       answer.classList.add("hidden");
 
       try {
-        const res = await fetch("/api/ask", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question })
-        });
+        const res = await fetch(
+          "https://abb-elip-epicor-chatbot.azurewebsites.net/api/ask",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question })
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error("API call failed");
+        }
 
         const data = await res.json();
 
