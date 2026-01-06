@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Enterprise Analytics Copilot</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="/styles.css" />
 </head>
+
 <body>
   <header>
     <h1>📊 Enterprise Analytics Copilot</h1>
@@ -14,8 +15,11 @@
 
   <main>
     <section class="ask">
-      <input id="questionInput" type="text"
-             placeholder="e.g., Revenue YoY in Q2 2025" />
+      <input
+        id="questionInput"
+        type="text"
+        placeholder="e.g., Revenue YoY in Q2 2025"
+      />
       <button id="askBtn">Ask</button>
     </section>
 
@@ -25,17 +29,40 @@
       <h2>Answer</h2>
       <p id="summary"></p>
     </section>
-
-    <section id="data" class="data hidden">
-      <h2>Data</h2>
-      <div id="tableContainer"></div>
-    </section>
   </main>
 
-  <footer>
-    <small>Powered by Azure Functions + Azure SQL</small>
-  </footer>
+  <script>
+    const askBtn = document.getElementById("askBtn");
+    const input = document.getElementById("questionInput");
+    const status = document.getElementById("status");
+    const answer = document.getElementById("answer");
+    const summary = document.getElementById("summary");
 
-  <script src="app.js"></script>
+    askBtn.onclick = async () => {
+      const question = input.value.trim();
+      if (!question) return;
+
+      status.classList.remove("hidden");
+      status.innerText = "⏳ Analyzing data...";
+      answer.classList.add("hidden");
+
+      try {
+        const res = await fetch("/api/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await res.json();
+
+        summary.innerText = data.summary || "No answer returned.";
+        answer.classList.remove("hidden");
+        status.classList.add("hidden");
+
+      } catch (err) {
+        status.innerText = "❌ Error connecting to analytics engine.";
+      }
+    };
+  </script>
 </body>
 </html>
