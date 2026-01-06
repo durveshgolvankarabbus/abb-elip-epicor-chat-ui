@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Enterprise Analytics Copilot</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>📊 Enterprise Analytics Copilot</h1>
+    <p>Ask questions about EPICOR data</p>
+  </header>
+
+  <main>
+    <section class="ask">
+      <input id="questionInput" type="text"
+             placeholder="e.g., Revenue YoY in Q2 2025" />
+      <button id="askBtn">Ask</button>
+    </section>
+
+    <section id="status" class="status hidden"></section>
+
+    <section id="answer" class="answer hidden">
+      <h2>Answer</h2>
+      <p id="summary"></p>
+    </section>
+
+    <section id="data" class="data hidden">
+      <h2>Data</h2>
+      <div id="tableContainer"></div>
+    </section>
+  </main>
+
+  <footer>
+    <small>Powered by Azure Functions + Azure SQL</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
