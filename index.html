@@ -4,30 +4,181 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Enterprise Analytics Copilot</title>
-  <link rel="stylesheet" href="/styles.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f5f6f8;
+      margin: 0;
+      padding: 0;
+      color: #222;
+    }
+
+    header {
+      background: #ffffff;
+      padding: 16px 32px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    header p {
+      margin: 4px 0 0;
+      color: #666;
+    }
+
+    main {
+      padding: 24px 32px;
+      max-width: 1400px;
+      margin: auto;
+    }
+
+    /* Ask bar */
+    .ask {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .ask input {
+      flex: 1;
+      padding: 12px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .ask button {
+      padding: 12px 20px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: none;
+      background: #0078d4;
+      color: white;
+      cursor: pointer;
+    }
+
+    .ask button:hover {
+      background: #005fa3;
+    }
+
+    /* KPI cards */
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi {
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .kpi-title {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* Panels */
+    .panel {
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+
+    th {
+      background: #f2f2f2;
+      font-weight: 600;
+    }
+
+    /* Status */
+    .status {
+      margin: 12px 0;
+      color: #0078d4;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 
 <body>
   <header>
     <h1>📊 Enterprise Analytics Copilot</h1>
-    <p>Ask questions about EPICOR data</p>
+    <p>Power BI–style analytics on EPICOR data</p>
   </header>
 
   <main>
+    <!-- Ask -->
     <section class="ask">
-      <input
-        id="questionInput"
-        type="text"
-        placeholder="e.g., show total revenue for 2025"
-      />
+      <input id="questionInput" placeholder="e.g. Show total revenue for 2025" />
       <button id="askBtn">Ask</button>
     </section>
 
-    <section id="status" class="status hidden"></section>
+    <div id="status" class="status hidden"></div>
 
-    <section id="answer" class="answer hidden">
-      <h2>Answer</h2>
-      <p id="summary"></p>
+    <!-- KPI Row -->
+    <section class="kpis hidden" id="kpis">
+      <div class="kpi">
+        <div class="kpi-title">Insight</div>
+        <div class="kpi-value" id="kpiSummary">—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">Year</div>
+        <div class="kpi-value" id="kpiYear">—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-title">Status</div>
+        <div class="kpi-value">Live</div>
+      </div>
+    </section>
+
+    <!-- Chart -->
+    <section class="panel hidden" id="chartPanel">
+      <h2>Revenue Trend</h2>
+      <canvas id="chart"></canvas>
+    </section>
+
+    <!-- Table -->
+    <section class="panel hidden" id="tablePanel">
+      <h2>Details</h2>
+      <table id="resultTable"></table>
     </section>
   </main>
 
@@ -35,44 +186,86 @@
     const askBtn = document.getElementById("askBtn");
     const input = document.getElementById("questionInput");
     const status = document.getElementById("status");
-    const answer = document.getElementById("answer");
-    const summary = document.getElementById("summary");
 
-    askBtn.addEventListener("click", async () => {
+    const kpis = document.getElementById("kpis");
+    const kpiSummary = document.getElementById("kpiSummary");
+    const kpiYear = document.getElementById("kpiYear");
+
+    const chartPanel = document.getElementById("chartPanel");
+    const tablePanel = document.getElementById("tablePanel");
+
+    let chartInstance = null;
+
+    askBtn.onclick = async () => {
       const question = input.value.trim();
       if (!question) return;
 
       status.classList.remove("hidden");
-      status.innerText = "⏳ Analyzing data...";
-      answer.classList.add("hidden");
+      status.innerText = "⏳ Running analysis...";
+      kpis.classList.add("hidden");
+      chartPanel.classList.add("hidden");
+      tablePanel.classList.add("hidden");
 
       try {
-        const response = await fetch(
+        const res = await fetch(
           "https://abb-elip-epicor-chatbot-g2hvgdadgtdycsdm.eastus-01.azurewebsites.net/api/ask",
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ question })
           }
         );
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+        const data = await res.json();
+
+        // KPI
+        kpiSummary.innerText = data.summary || "—";
+        const yearMatch = question.match(/20\d{2}/);
+        kpiYear.innerText = yearMatch ? yearMatch[0] : "All";
+        kpis.classList.remove("hidden");
+
+        // Chart (if provided later)
+        if (data.chart) {
+          chartPanel.classList.remove("hidden");
+          if (chartInstance) chartInstance.destroy();
+
+          chartInstance = new Chart(
+            document.getElementById("chart"),
+            {
+              type: "line",
+              data: data.chart
+            }
+          );
         }
 
-        const data = await response.json();
+        // Table (if provided later)
+        if (data.table && data.table.length > 0) {
+          tablePanel.classList.remove("hidden");
+          renderTable(data.table);
+        }
 
-        summary.innerText = data.summary || "No answer returned.";
-        answer.classList.remove("hidden");
         status.classList.add("hidden");
 
-      } catch (error) {
-        console.error(error);
-        status.innerText = "❌ Error connecting to analytics engine.";
+      } catch (e) {
+        status.innerText = "❌ Failed to load analytics";
       }
-    });
+    };
+
+    function renderTable(rows) {
+      const table = document.getElementById("resultTable");
+      table.innerHTML = "";
+
+      const headers = Object.keys(rows[0]);
+      table.innerHTML +=
+        "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+
+      rows.forEach(r => {
+        table.innerHTML +=
+          "<tr>" +
+          headers.map(h => `<td>${r[h]}</td>`).join("") +
+          "</tr>";
+      });
+    }
   </script>
 </body>
 </html>
