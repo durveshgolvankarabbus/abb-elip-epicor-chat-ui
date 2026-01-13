@@ -1,21 +1,33 @@
-// Environment-aware API base
-const API_BASE =
-  window.location.hostname.includes("azurestaticapps.net")
-    ? "https://abb-elip-epicor-chatbot-g2hvgdadgtdycsdm.eastus-01.azurewebsites.net"
-    : "http://localhost:7071";
+// =====================================================
+// ENVIRONMENT-AWARE API BASE
+// =====================================================
+const API_BASE = window.location.hostname.includes("azurestaticapps.net")
+  ? "https://abb-elip-epicor-chatbot-g2hvgdadgtdycsdm.eastus-01.azurewebsites.net"
+  : "http://localhost:7071";
 
+// =====================================================
+// DOM ELEMENTS
+// =====================================================
 const input = document.getElementById("questionInput");
 const btn = document.getElementById("askBtn");
 const status = document.getElementById("status");
 const answer = document.getElementById("answer");
 const summary = document.getElementById("summary");
-const data = document.getElementById("data");
+const dataPanel = document.getElementById("data");
 const tableContainer = document.getElementById("tableContainer");
 const envPill = document.getElementById("envPill");
 const copyBtn = document.getElementById("copyBtn");
 
-envPill.textContent = window.location.hostname.includes("azurestaticapps.net") ? "Azure" : "Local";
+// =====================================================
+// ENV LABEL
+// =====================================================
+envPill.textContent = window.location.hostname.includes("azurestaticapps.net")
+  ? "Azure"
+  : "Local";
 
+// =====================================================
+// EVENT BINDINGS
+// =====================================================
 btn.addEventListener("click", ask);
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter") ask();
@@ -23,29 +35,48 @@ input.addEventListener("keydown", (e) => {
 
 copyBtn.addEventListener("click", copyTableToClipboard);
 
+// Make example questions clickable (Copilot style)
+document.querySelectorAll(".panel.hint li").forEach(li => {
+  li.addEventListener("click", () => {
+    input.value = li.textContent;
+    ask();
+  });
+});
+
+// =====================================================
+// UI HELPERS
+// =====================================================
 function resetUI() {
   status.classList.add("hidden");
-  status.classList.remove("error");
   answer.classList.add("hidden");
-  data.classList.add("hidden");
+  dataPanel.classList.add("hidden");
   summary.textContent = "";
   tableContainer.innerHTML = "";
   copyBtn.classList.add("hidden");
 }
 
-function showStatus(msg, isError = false) {
+function showStatus(msg) {
   status.textContent = msg;
   status.classList.remove("hidden");
-  status.classList.toggle("error", isError);
 }
 
+function showError(msg) {
+  status.textContent = `❌ ${msg}`;
+  status.classList.remove("hidden");
+}
+
+// =====================================================
+// MAIN ASK FLOW
+// =====================================================
 async function ask() {
   const question = input.value.trim();
   if (!question) return;
 
   resetUI();
   btn.disabled = true;
-  showStatus("⏳ Running analysis…");
+
+  // Copilot-style thinking state
+  showStatus("Thinking…");
 
   try {
     const res = await fetch(`${API_BASE}/api/ask`, {
@@ -55,37 +86,53 @@ async function ask() {
     });
 
     const json = await res.json();
-    if (!res.ok) throw new Error(json?.error || "API error");
+    if (!res.ok) {
+      throw new Error(json?.reason || json?.error || "Request failed");
+    }
 
-    status.classList.add("hidden");
+    // -------------------------
+    // SUMMARY (COPILOT STYLE)
+    // -------------------------
     answer.classList.remove("hidden");
-    summary.textContent = json.summary || "Query executed successfully.";
 
-    const rows = json.rows || json.table || [];
+    summary.innerHTML = `
+      <strong>Result:</strong> ${json.metric_definition}<br/>
+      <strong>Confidence:</strong> ${(json.confidence_score * 100).toFixed(0)}%<br/>
+      <strong>Time Window:</strong> ${formatTimeWindow(json.time_window_applied)}
+    `;
+
+    // -------------------------
+    // TABLE
+    // -------------------------
+    const rows = json.data || [];
+    dataPanel.classList.remove("hidden");
+
     if (Array.isArray(rows) && rows.length > 0) {
-      data.classList.remove("hidden");
       renderTable(rows);
       copyBtn.classList.remove("hidden");
     } else {
-      data.classList.remove("hidden");
       tableContainer.innerHTML = "<em>No data returned.</em>";
     }
+
+    status.classList.add("hidden");
   } catch (err) {
     console.error(err);
-    showStatus(`❌ ${err.message || "Failed to connect to backend"}`, true);
+    showError(err.message || "Failed to connect to backend");
   } finally {
     btn.disabled = false;
   }
 }
 
-function isNumericLike(v) {
-  if (typeof v !== "string") return false;
-  const s = v.trim();
-  // currency: $1,234 or $1,234.5
-  if (/^\$\s?-?\d{1,3}(,\d{3})*(\.\d)?$/.test(s)) return true;
-  // numeric with commas: 1,234 or 12,345
-  if (/^-?\d{1,3}(,\d{3})*(\.\d+)?$/.test(s)) return true;
-  return false;
+// =====================================================
+// HELPERS
+// =====================================================
+function formatTimeWindow(tw) {
+  if (!tw) return "N/A";
+  if (tw.type === "rolling") return `Last ${tw.value} quarters`;
+  if (tw.type === "point") return `Year ${tw.value}`;
+  if (tw.type === "yoy") return "Year-over-Year";
+  if (tw.type === "qoq") return "Quarter-over-Quarter";
+  return tw.type;
 }
 
 function renderTable(rows) {
@@ -108,7 +155,6 @@ function renderTable(rows) {
       const td = document.createElement("td");
       const val = r[h] ?? "";
       td.textContent = String(val);
-      if (isNumericLike(String(val))) td.classList.add("num");
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -130,8 +176,7 @@ async function copyTableToClipboard() {
     const cells = [...tr.children].map(td => (td.textContent || "").trim());
     rows.push(cells.join("\t"));
   }
-  const text = rows.join("\n");
-  await navigator.clipboard.writeText(text);
-  showStatus("✅ Table copied to clipboard.");
-  setTimeout(() => status.classList.add("hidden"), 1400);
+  await navigator.clipboard.writeText(rows.join("\n"));
+  showStatus("Copied to clipboard");
+  setTimeout(() => status.classList.add("hidden"), 1200);
 }
