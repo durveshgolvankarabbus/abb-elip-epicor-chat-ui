@@ -1,216 +1,203 @@
-* { box-sizing: border-box; }
-:root {
-  --bg: #f6f7fb;
-  --panel: #ffffff;
-  --text: #111827;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --brand: #2563eb;
-  --brand2: #1d4ed8;
-  --errorBg: #fee2e2;
-  --errorText: #991b1b;
-  --infoBg: #e0f2fe;
-  --infoText: #0369a1;
+/* =====================================================
+   RESET & BASE
+   ===================================================== */
+* {
+  box-sizing: border-box;
 }
 
-body {
-  font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+html, body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
+  padding: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f7f7f8;
+  color: #1f1f1f;
 }
 
+/* =====================================================
+   TOP BAR (SUBTLE)
+   ===================================================== */
 .topbar {
-  background: #0f172a;
-  color: #fff;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
 }
 
 .topbar-inner {
-  max-width: 1200px;
-  margin: auto;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 14px 20px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  align-items: center;
 }
 
 .brand-title {
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 0.2px;
+  font-size: 16px;
+  font-weight: 600;
 }
+
 .brand-subtitle {
-  margin-top: 2px;
-  font-size: 13px;
-  opacity: 0.85;
+  font-size: 12px;
+  color: #666;
 }
 
 .env-pill {
-  padding: 6px 10px;
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 999px;
   font-size: 12px;
-  opacity: 0.95;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e6f4ea;
+  color: #1e7f3d;
 }
 
+/* =====================================================
+   MAIN CONTAINER
+   ===================================================== */
 .container {
-  max-width: 1200px;
-  margin: auto;
-  padding: 22px 20px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 16px 120px;
 }
 
+/* =====================================================
+   ASK BAR (COPILOT STYLE)
+   ===================================================== */
 .ask {
   display: flex;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 24px;
 }
 
 .ask input {
   flex: 1;
-  padding: 12px 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #d0d0d0;
   font-size: 15px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
   outline: none;
-  background: #fff;
+  background: #ffffff;
 }
 
 .ask input:focus {
-  border-color: rgba(37, 99, 235, 0.65);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  border-color: #0078d4;
 }
 
 .ask button {
-  padding: 12px 18px;
-  border-radius: 10px;
+  padding: 0 18px;
+  border-radius: 12px;
   border: none;
-  background: var(--brand);
-  color: #fff;
-  font-size: 15px;
+  background: #0078d4;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  white-space: nowrap;
 }
 
-.ask button:hover { background: var(--brand2); }
-.ask button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.ask button:hover {
+  background: #106ebe;
 }
 
+/* =====================================================
+   STATUS
+   ===================================================== */
 .status {
-  margin: 10px 0 16px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--infoBg);
-  color: var(--infoText);
-  border: 1px solid rgba(3,105,161,0.15);
+  margin: 12px 0;
+  font-size: 14px;
+  color: #555;
 }
 
-.status.error {
-  background: var(--errorBg);
-  color: var(--errorText);
-  border: 1px solid rgba(153,27,27,0.18);
+.hidden {
+  display: none;
 }
 
+/* =====================================================
+   CHAT RESPONSE PANELS
+   ===================================================== */
 .panel {
-  background: var(--panel);
+  background: #ffffff;
   border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 14px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  border: 1px solid rgba(17,24,39,0.03);
+  padding: 18px;
+  margin-top: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.panel h2 {
-  margin: 0;
-  font-size: 15px;
+.panel-header h2 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
 }
 
 .summary {
-  margin: 10px 0 0;
-  color: #111827;
-  line-height: 1.35;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
+/* =====================================================
+   TABLE
+   ===================================================== */
 .table-wrap {
-  margin-top: 10px;
-  overflow: auto;
-  border-radius: 12px;
-  border: 1px solid var(--border);
+  overflow-x: auto;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
-  background: #fff;
+  font-size: 13px;
 }
 
-thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: #f1f5f9;
-  border-bottom: 1px solid var(--border);
+th, td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
   text-align: left;
-  padding: 10px;
-  font-weight: 700;
 }
 
-tbody td {
-  padding: 9px 10px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: top;
+th {
+  font-weight: 600;
+  color: #444;
 }
 
-tbody tr:nth-child(even) td {
-  background: #fafafa;
-}
-
-td.num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.footer {
-  padding: 14px 18px;
-  text-align: center;
-  color: var(--muted);
-  font-size: 12.5px;
-}
-
-.hint ul { margin: 10px 0 0; padding-left: 18px; color: #374151; }
-.hint li { margin: 6px 0; }
-
-.hidden { display: none; }
-
+/* =====================================================
+   BUTTONS
+   ===================================================== */
 .ghost-btn {
   background: transparent;
-  border: 1px solid var(--border);
-  padding: 8px 10px;
-  border-radius: 10px;
+  border: none;
+  color: #0078d4;
   cursor: pointer;
-  color: #111827;
+  font-size: 13px;
 }
 
 .ghost-btn:hover {
-  background: #f8fafc;
+  text-decoration: underline;
 }
 
-.sr-only {
-  position: absolute;
-  left: -10000px;
-  top: auto;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
+/* =====================================================
+   EXAMPLES (COPILOT SUGGESTIONS)
+   ===================================================== */
+.panel.hint ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+.panel.hint li {
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: #f3f3f3;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.panel.hint li:hover {
+  background: #eaeaea;
+}
+
+/* =====================================================
+   FOOTER
+   ===================================================== */
+.footer {
+  text-align: center;
+  font-size: 12px;
+  color: #777;
+  padding: 20px;
 }
