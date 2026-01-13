@@ -33,7 +33,7 @@ input.addEventListener("keydown", (e) => {
 copyBtn.addEventListener("click", copyTableToClipboard);
 
 // =====================================================
-// Helpers
+// UI Helpers
 // =====================================================
 function resetUI() {
   status.classList.add("hidden");
@@ -51,7 +51,9 @@ function showStatus(msg, isError = false) {
   status.classList.toggle("error", isError);
 }
 
-// Convert backend quarter_index → Qx YYYY
+// =====================================================
+// Quarter Formatting
+// =====================================================
 function quarterIndexToLabel(qi) {
   const year = Math.floor(qi / 4);
   const q = qi % 4 === 0 ? 4 : qi % 4;
@@ -60,7 +62,7 @@ function quarterIndexToLabel(qi) {
 }
 
 // =====================================================
-// Main Ask Function
+// Main Ask Function (SAFE)
 // =====================================================
 async function ask() {
   const question = input.value.trim();
@@ -77,17 +79,30 @@ async function ask() {
       body: JSON.stringify({ question })
     });
 
-    const json = await res.json();
-    if (!res.ok) throw new Error(json?.error || "API error");
+    // ✅ SAFE RESPONSE PARSING
+    let json = null;
+    const text = await res.text();
+
+    if (text) {
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error("Invalid response from backend");
+      }
+    }
+
+    if (!res.ok) {
+      throw new Error(json?.error || "Backend error");
+    }
 
     status.classList.add("hidden");
     answer.classList.remove("hidden");
 
     summary.textContent =
-      json.summary ||
+      json?.summary ||
       "Analysis completed successfully based on available market data.";
 
-    const rows = json.data || [];
+    const rows = json?.data || [];
     if (Array.isArray(rows) && rows.length > 0) {
       data.classList.remove("hidden");
       renderTable(rows);
@@ -96,6 +111,7 @@ async function ask() {
       data.classList.remove("hidden");
       tableContainer.innerHTML = "<em>No data returned.</em>";
     }
+
   } catch (err) {
     console.error(err);
     showStatus(`❌ ${err.message || "Failed to connect to backend"}`, true);
@@ -105,12 +121,11 @@ async function ask() {
 }
 
 // =====================================================
-// Table Rendering (EXECUTIVE SAFE)
+// Table Rendering (Executive-Safe)
 // =====================================================
 function renderTable(rows) {
   const table = document.createElement("table");
 
-  // Replace quarter_index with Quarter label
   const rawHeaders = Object.keys(rows[0]);
   const headers = rawHeaders.map(h =>
     h === "quarter_index" ? "Quarter" : h
@@ -118,11 +133,13 @@ function renderTable(rows) {
 
   const thead = document.createElement("thead");
   const hr = document.createElement("tr");
+
   headers.forEach(h => {
     const th = document.createElement("th");
     th.textContent = h;
     hr.appendChild(th);
   });
+
   thead.appendChild(hr);
 
   const tbody = document.createElement("tbody");
@@ -132,8 +149,8 @@ function renderTable(rows) {
 
     rawHeaders.forEach(h => {
       const td = document.createElement("td");
-
       let val = r[h] ?? "";
+
       if (h === "quarter_index") {
         val = quarterIndexToLabel(val);
       }
