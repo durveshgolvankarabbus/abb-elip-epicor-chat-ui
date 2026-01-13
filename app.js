@@ -1,5 +1,5 @@
 // =====================================================
-// ENVIRONMENT-AWARE API BASE
+// Environment-aware API base
 // =====================================================
 const API_BASE =
   window.location.hostname.includes("azurestaticapps.net")
@@ -7,28 +7,24 @@ const API_BASE =
     : "http://localhost:7071";
 
 // =====================================================
-// DOM ELEMENTS
+// DOM Elements
 // =====================================================
 const input = document.getElementById("questionInput");
 const btn = document.getElementById("askBtn");
 const status = document.getElementById("status");
-const envPill = document.getElementById("envPill");
+const answer = document.getElementById("answer");
+const summary = document.getElementById("summary");
+const data = document.getElementById("data");
 const tableContainer = document.getElementById("tableContainer");
+const envPill = document.getElementById("envPill");
 const copyBtn = document.getElementById("copyBtn");
 
-// Panels (reuse existing layout)
-const answerPanel = document.getElementById("answer");
-const summaryEl = document.getElementById("summary");
-const dataPanel = document.getElementById("data");
+envPill.textContent = window.location.hostname.includes("azurestaticapps.net")
+  ? "Azure"
+  : "Local";
 
 // =====================================================
-// ENV PILL
-// =====================================================
-envPill.textContent =
-  window.location.hostname.includes("azurestaticapps.net") ? "Azure" : "Local";
-
-// =====================================================
-// EVENT WIRES
+// Event Listeners
 // =====================================================
 btn.addEventListener("click", ask);
 input.addEventListener("keydown", (e) => {
@@ -37,13 +33,14 @@ input.addEventListener("keydown", (e) => {
 copyBtn.addEventListener("click", copyTableToClipboard);
 
 // =====================================================
-// UI HELPERS
+// Helpers
 // =====================================================
 function resetUI() {
   status.classList.add("hidden");
-  answerPanel.classList.add("hidden");
-  dataPanel.classList.add("hidden");
-  summaryEl.textContent = "";
+  status.classList.remove("error");
+  answer.classList.add("hidden");
+  data.classList.add("hidden");
+  summary.textContent = "";
   tableContainer.innerHTML = "";
   copyBtn.classList.add("hidden");
 }
@@ -54,16 +51,16 @@ function showStatus(msg, isError = false) {
   status.classList.toggle("error", isError);
 }
 
-function showThinking() {
-  showStatus("Thinking");
-}
-
-function hideStatus() {
-  status.classList.add("hidden");
+// Convert backend quarter_index → Qx YYYY
+function quarterIndexToLabel(qi) {
+  const year = Math.floor(qi / 4);
+  const q = qi % 4 === 0 ? 4 : qi % 4;
+  const adjustedYear = qi % 4 === 0 ? year - 1 : year;
+  return `Q${q} ${adjustedYear}`;
 }
 
 // =====================================================
-// MAIN ASK FLOW (COPILOT STYLE)
+// Main Ask Function
 // =====================================================
 async function ask() {
   const question = input.value.trim();
@@ -71,113 +68,80 @@ async function ask() {
 
   resetUI();
   btn.disabled = true;
-  showThinking();
+  showStatus("⏳ Running analysis…");
 
   try {
     const res = await fetch(`${API_BASE}/api/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question })
     });
 
     const json = await res.json();
-    if (!res.ok) {
-      throw new Error(json?.reason || json?.error || "Backend error");
-    }
+    if (!res.ok) throw new Error(json?.error || "API error");
 
-    hideStatus();
+    status.classList.add("hidden");
+    answer.classList.remove("hidden");
 
-    // -------------------------
-    // SUMMARY (CHAT RESPONSE)
-    // -------------------------
-    answerPanel.classList.remove("hidden");
-
-    summaryEl.textContent =
+    summary.textContent =
       json.summary ||
-      buildSummaryFromIntent(json) ||
-      "Analysis completed successfully.";
+      "Analysis completed successfully based on available market data.";
 
-    // -------------------------
-    // DATA TABLE (IF ANY)
-    // -------------------------
     const rows = json.data || [];
-    dataPanel.classList.remove("hidden");
-
     if (Array.isArray(rows) && rows.length > 0) {
+      data.classList.remove("hidden");
       renderTable(rows);
       copyBtn.classList.remove("hidden");
     } else {
+      data.classList.remove("hidden");
       tableContainer.innerHTML = "<em>No data returned.</em>";
     }
   } catch (err) {
     console.error(err);
-    showStatus(`❌ ${err.message}`, true);
+    showStatus(`❌ ${err.message || "Failed to connect to backend"}`, true);
   } finally {
     btn.disabled = false;
   }
 }
 
 // =====================================================
-// SMART SUMMARY BUILDER
-// =====================================================
-function buildSummaryFromIntent(json) {
-  const metric = json.metric_definition;
-  const filters = json.filters_applied || {};
-  const time = json.time_window_applied;
-
-  let parts = [];
-
-  if (metric === "market_share") {
-    parts.push("Market share analysis");
-  } else if (metric === "Dollars") {
-    parts.push("Revenue analysis");
-  }
-
-  if (filters.ProductCategory) {
-    parts.push(`for ${filters.ProductCategory}`);
-  }
-
-  if (filters.Manufacturer) {
-    parts.push(`(${filters.Manufacturer})`);
-  }
-
-  if (time?.type === "rolling") {
-    parts.push(`over the last ${time.value} quarters`);
-  } else if (time?.value) {
-    parts.push(`for ${time.value}`);
-  }
-
-  return parts.length ? parts.join(" ") + "." : null;
-}
-
-// =====================================================
-// TABLE RENDERING
+// Table Rendering (EXECUTIVE SAFE)
 // =====================================================
 function renderTable(rows) {
   const table = document.createElement("table");
-  const headers = Object.keys(rows[0]);
+
+  // Replace quarter_index with Quarter label
+  const rawHeaders = Object.keys(rows[0]);
+  const headers = rawHeaders.map(h =>
+    h === "quarter_index" ? "Quarter" : h
+  );
 
   const thead = document.createElement("thead");
   const hr = document.createElement("tr");
-
-  headers.forEach((h) => {
+  headers.forEach(h => {
     const th = document.createElement("th");
     th.textContent = h;
     hr.appendChild(th);
   });
-
   thead.appendChild(hr);
 
   const tbody = document.createElement("tbody");
-  rows.forEach((r) => {
+
+  rows.forEach(r => {
     const tr = document.createElement("tr");
-    headers.forEach((h) => {
+
+    rawHeaders.forEach(h => {
       const td = document.createElement("td");
-      const val = r[h] ?? "";
+
+      let val = r[h] ?? "";
+      if (h === "quarter_index") {
+        val = quarterIndexToLabel(val);
+      }
+
       td.textContent = String(val);
-      if (isNumericLike(val)) td.classList.add("num");
       tr.appendChild(td);
     });
+
     tbody.appendChild(tr);
   });
 
@@ -189,21 +153,15 @@ function renderTable(rows) {
 }
 
 // =====================================================
-// UTILITIES
+// Copy to Clipboard
 // =====================================================
-function isNumericLike(v) {
-  if (typeof v === "number") return true;
-  if (typeof v !== "string") return false;
-  return /^-?\d+(,\d{3})*(\.\d+)?$/.test(v);
-}
-
 async function copyTableToClipboard() {
   const table = tableContainer.querySelector("table");
   if (!table) return;
 
   const rows = [];
   for (const tr of table.querySelectorAll("tr")) {
-    const cells = [...tr.children].map((td) =>
+    const cells = [...tr.children].map(td =>
       (td.textContent || "").trim()
     );
     rows.push(cells.join("\t"));
@@ -211,5 +169,5 @@ async function copyTableToClipboard() {
 
   await navigator.clipboard.writeText(rows.join("\n"));
   showStatus("✅ Table copied to clipboard.");
-  setTimeout(hideStatus, 1400);
+  setTimeout(() => status.classList.add("hidden"), 1400);
 }
