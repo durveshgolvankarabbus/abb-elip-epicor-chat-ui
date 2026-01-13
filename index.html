@@ -4,10 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <title>Enterprise Analytics Copilot</title>
-  <meta name="description" content="Power BI–style insights on EPICOR & Market data." />
+  <title>ABB ELIP Market Intelligence – Chatbot Demo</title>
+  <meta
+    name="description"
+    content="ABB ELIP Market Intelligence Chatbot – Natural language insights on EPICOR and market performance data."
+  />
 
-  <!-- Favicon (prevents 404 noise if you don't have an icon file yet) -->
+  <!-- Favicon (prevents 404 noise if no icon yet) -->
   <link rel="icon" href="data:," />
 
   <!-- CSS -->
@@ -15,20 +18,40 @@
 </head>
 
 <body>
+  <!-- ===================================================== -->
+  <!-- TOP BAR -->
+  <!-- ===================================================== -->
   <header class="topbar" role="banner">
     <div class="topbar-inner">
       <div class="brand" aria-label="Application title">
-        <div class="brand-title">Enterprise Analytics Copilot</div>
-        <div class="brand-subtitle">Power BI–style insights on EPICOR &amp; Market data</div>
+        <div class="brand-title">
+          ABB ELIP Market Intelligence
+        </div>
+        <div class="brand-subtitle">
+          Natural language analytics on EPICOR &amp; market data
+        </div>
       </div>
 
-      <div class="env-pill" id="envPill" aria-label="Environment status">Live</div>
+      <div
+        class="env-pill"
+        id="envPill"
+        aria-label="Environment status"
+        title="Live production-connected demo"
+      >
+        Live
+      </div>
     </div>
   </header>
 
+  <!-- ===================================================== -->
+  <!-- MAIN CONTENT -->
+  <!-- ===================================================== -->
   <main class="container" role="main">
-    <section class="ask" aria-label="Ask a question">
-      <label for="questionInput" class="sr-only">Ask a question</label>
+    <!-- ASK -->
+    <section class="ask" aria-label="Ask a business question">
+      <label for="questionInput" class="sr-only">
+        Ask a business question
+      </label>
 
       <input
         id="questionInput"
@@ -41,10 +64,12 @@
         aria-describedby="examplesHint"
       />
 
-      <button id="askBtn" type="button" aria-label="Submit question">Ask</button>
+      <button id="askBtn" type="button" aria-label="Submit question">
+        Ask
+      </button>
     </section>
 
-    <!-- Live status messages (loading/errors/success) -->
+    <!-- STATUS -->
     <div
       id="status"
       class="status hidden"
@@ -53,48 +78,60 @@
       aria-atomic="true"
     ></div>
 
-    <!-- Summary -->
-    <section id="answer" class="panel hidden" aria-label="Answer summary">
+    <!-- SUMMARY -->
+    <section id="answer" class="panel hidden" aria-label="Executive summary">
       <div class="panel-header">
-        <h2>Summary</h2>
+        <h2>Executive Summary</h2>
       </div>
       <p id="summary" class="summary"></p>
     </section>
 
-    <!-- Results -->
-    <section id="data" class="panel hidden" aria-label="Result details">
+    <!-- DATA -->
+    <section id="data" class="panel hidden" aria-label="Detailed results">
       <div class="panel-header">
-        <h2>Details</h2>
+        <h2>Detailed Results</h2>
         <div class="panel-actions">
-          <button id="copyBtn" class="ghost-btn hidden" type="button" aria-label="Copy table to clipboard">
+          <button
+            id="copyBtn"
+            class="ghost-btn hidden"
+            type="button"
+            aria-label="Copy table to clipboard"
+          >
             Copy table
           </button>
         </div>
       </div>
 
-      <div id="tableContainer" class="table-wrap" aria-label="Results table"></div>
+      <div
+        id="tableContainer"
+        class="table-wrap"
+        aria-label="Results table"
+      ></div>
     </section>
 
-    <!-- Examples -->
-    <section class="panel hint" aria-label="Examples">
-      <h2 id="examplesHint">Examples</h2>
+    <!-- EXAMPLES -->
+    <section class="panel hint" aria-label="Example questions">
+      <h2 id="examplesHint">Example Questions</h2>
       <ul>
         <li>Market share for last 8 quarters for Metallic Boxes</li>
         <li>Market share for last 8 quarters for top 5 manufacturers in Cable Ties</li>
-        <li>Out of top 3 manufacturers in Cable Ties who gained and lost share in Q3 2025 compared to Q3 2024</li>
-        <li>Growth Q3 2025 vs Q3 2024 for Conduit Fittings</li>
-        <li>Seasonality for Cable Ties</li>
-        <li>New SKUs launched in last 4 quarters for Non-Metallic Boxes</li>
-        <li>Market share for Type1 Q3 2025 for Cable Ties</li>
+        <li>Out of top 3 manufacturers in Cable Ties, who gained and lost share in Q3 2025 vs Q3 2024</li>
+        <li>Revenue growth YoY for Conduit Fittings</li>
+        <li>Seasonality trends for Cable Ties</li>
+        <li>New SKUs launched in the last 4 quarters for Non-Metallic Boxes</li>
+        <li>Market share for Type 1 products in Q3 2025 for Cable Ties</li>
       </ul>
     </section>
   </main>
 
+  <!-- ===================================================== -->
+  <!-- FOOTER -->
+  <!-- ===================================================== -->
   <footer class="footer" role="contentinfo">
-    © ABB Enterprise Analytics
+    © ABB – ELIP Market Intelligence Demo
   </footer>
 
-  <!-- App JS (single entry point) -->
+  <!-- App JS -->
   <script src="app.js" defer></script>
 </body>
 </html>
